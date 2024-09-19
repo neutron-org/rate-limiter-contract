@@ -1,0 +1,427 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecuteMsg",
+  "description": "The caller (IBC module) is responsible for correctly calculating the funds being sent through the channel",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "add_path"
+      ],
+      "properties": {
+        "add_path": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "denom",
+            "quotas"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "denom": {
+              "type": "string"
+            },
+            "quotas": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/QuotaMsg"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "remove_path"
+      ],
+      "properties": {
+        "remove_path": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "denom"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "denom": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "reset_path_quota"
+      ],
+      "properties": {
+        "reset_path_quota": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "denom",
+            "quota_id"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "denom": {
+              "type": "string"
+            },
+            "quota_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "set_denom_restrictions"
+      ],
+      "properties": {
+        "set_denom_restrictions": {
+          "type": "object",
+          "required": [
+            "allowed_channels",
+            "denom"
+          ],
+          "properties": {
+            "allowed_channels": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "denom": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "required": [
+        "unset_denom_restrictions"
+      ],
+      "properties": {
+        "unset_denom_restrictions": {
+          "type": "object",
+          "required": [
+            "denom"
+          ],
+          "properties": {
+            "denom": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Grants a role to the given signer",
+      "type": "object",
+      "required": [
+        "grant_role"
+      ],
+      "properties": {
+        "grant_role": {
+          "type": "object",
+          "required": [
+            "roles",
+            "signer"
+          ],
+          "properties": {
+            "roles": {
+              "description": "full list of roles to grant the signer",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Roles"
+              }
+            },
+            "signer": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Removes the role that has been granted to the signer",
+      "type": "object",
+      "required": [
+        "revoke_role"
+      ],
+      "properties": {
+        "revoke_role": {
+          "type": "object",
+          "required": [
+            "roles",
+            "signer"
+          ],
+          "properties": {
+            "roles": {
+              "description": "fill list of roles to revoke from the signer",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Roles"
+              }
+            },
+            "signer": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Replaces the quota identified by QuotaMsg::Name",
+      "type": "object",
+      "required": [
+        "edit_path_quota"
+      ],
+      "properties": {
+        "edit_path_quota": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "denom",
+            "quota"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "denom": {
+              "type": "string"
+            },
+            "quota": {
+              "description": "similar to ResetPathQuota, but QuotaMsg::Name is used as the quota_id",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/QuotaMsg"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Used to remove a message from the message queue to prevent execution",
+      "type": "object",
+      "required": [
+        "remove_message"
+      ],
+      "properties": {
+        "remove_message": {
+          "type": "object",
+          "required": [
+            "message_id"
+          ],
+          "properties": {
+            "message_id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Used to change the timelock delay for newly submitted messages",
+      "type": "object",
+      "required": [
+        "set_timelock_delay"
+      ],
+      "properties": {
+        "set_timelock_delay": {
+          "type": "object",
+          "required": [
+            "hours",
+            "signer"
+          ],
+          "properties": {
+            "hours": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "signer": {
+              "description": "the address to apply the timelock delay to",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Permissionless message that anyone can invoke to trigger execution of queued messages that have passed the timelock delay\n\nIf both count and message_ids are some, message_ids is used. If both are None returns an error",
+      "type": "object",
+      "required": [
+        "process_messages"
+      ],
+      "properties": {
+        "process_messages": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "description": "number of queued messages to process, a value of 0 will attempt to process all queued messages",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "message_ids": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "QuotaMsg": {
+      "type": "object",
+      "required": [
+        "duration",
+        "name",
+        "send_recv"
+      ],
+      "properties": {
+        "duration": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "name": {
+          "type": "string"
+        },
+        "send_recv": {
+          "type": "array",
+          "items": [
+            {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          ],
+          "maxItems": 2,
+          "minItems": 2
+        }
+      },
+      "additionalProperties": false
+    },
+    "Roles": {
+      "description": "Roles defines the available permissions that can be assigned to addresses as part of the RBAC system",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "ManageDenomRestrictions"
+          ]
+        },
+        {
+          "description": "Has the ability to add a new rate limit",
+          "type": "string",
+          "enum": [
+            "AddRateLimit"
+          ]
+        },
+        {
+          "description": "Has the ability to complete remove a configured rate limit",
+          "type": "string",
+          "enum": [
+            "RemoveRateLimit"
+          ]
+        },
+        {
+          "description": "Has the ability to reset tracked quotas",
+          "type": "string",
+          "enum": [
+            "ResetPathQuota"
+          ]
+        },
+        {
+          "description": "Has the ability to edit existing quotas",
+          "type": "string",
+          "enum": [
+            "EditPathQuota"
+          ]
+        },
+        {
+          "description": "Has the ability to grant roles to an address",
+          "type": "string",
+          "enum": [
+            "GrantRole"
+          ]
+        },
+        {
+          "description": "Has the ability to revoke granted roles to an address",
+          "type": "string",
+          "enum": [
+            "RevokeRole"
+          ]
+        },
+        {
+          "description": "Has the ability to remove queued messages",
+          "type": "string",
+          "enum": [
+            "RemoveMessage"
+          ]
+        },
+        {
+          "description": "Has the ability to alter timelock delay's",
+          "type": "string",
+          "enum": [
+            "SetTimelockDelay"
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,1498 @@
+{
+  "contract_name": "rate-limiter",
+  "contract_version": "0.1.0",
+  "idl_version": "1.0.0",
+  "instantiate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "InstantiateMsg",
+    "description": "Initialize the contract with the address of the IBC module and any existing channels. Only the ibc module is allowed to execute actions on this contract",
+    "type": "object",
+    "required": [
+      "gov_module",
+      "ibc_module",
+      "paths"
+    ],
+    "properties": {
+      "gov_module": {
+        "$ref": "#/definitions/Addr"
+      },
+      "ibc_module": {
+        "$ref": "#/definitions/Addr"
+      },
+      "paths": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/PathMsg"
+        }
+      }
+    },
+    "additionalProperties": false,
+    "definitions": {
+      "Addr": {
+        "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+        "type": "string"
+      },
+      "PathMsg": {
+        "type": "object",
+        "required": [
+          "channel_id",
+          "denom",
+          "quotas"
+        ],
+        "properties": {
+          "channel_id": {
+            "type": "string"
+          },
+          "denom": {
+            "type": "string"
+          },
+          "quotas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/QuotaMsg"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "QuotaMsg": {
+        "type": "object",
+        "required": [
+          "duration",
+          "name",
+          "send_recv"
+        ],
+        "properties": {
+          "duration": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "name": {
+            "type": "string"
+          },
+          "send_recv": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "execute": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "ExecuteMsg",
+    "description": "The caller (IBC module) is responsible for correctly calculating the funds being sent through the channel",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "add_path"
+        ],
+        "properties": {
+          "add_path": {
+            "type": "object",
+            "required": [
+              "channel_id",
+              "denom",
+              "quotas"
+            ],
+            "properties": {
+              "channel_id": {
+                "type": "string"
+              },
+              "denom": {
+                "type": "string"
+              },
+              "quotas": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/QuotaMsg"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "remove_path"
+        ],
+        "properties": {
+          "remove_path": {
+            "type": "object",
+            "required": [
+              "channel_id",
+              "denom"
+            ],
+            "properties": {
+              "channel_id": {
+                "type": "string"
+              },
+              "denom": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "reset_path_quota"
+        ],
+        "properties": {
+          "reset_path_quota": {
+            "type": "object",
+            "required": [
+              "channel_id",
+              "denom",
+              "quota_id"
+            ],
+            "properties": {
+              "channel_id": {
+                "type": "string"
+              },
+              "denom": {
+                "type": "string"
+              },
+              "quota_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "set_denom_restrictions"
+        ],
+        "properties": {
+          "set_denom_restrictions": {
+            "type": "object",
+            "required": [
+              "allowed_channels",
+              "denom"
+            ],
+            "properties": {
+              "allowed_channels": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "denom": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "unset_denom_restrictions"
+        ],
+        "properties": {
+          "unset_denom_restrictions": {
+            "type": "object",
+            "required": [
+              "denom"
+            ],
+            "properties": {
+              "denom": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Grants a role to the given signer",
+        "type": "object",
+        "required": [
+          "grant_role"
+        ],
+        "properties": {
+          "grant_role": {
+            "type": "object",
+            "required": [
+              "roles",
+              "signer"
+            ],
+            "properties": {
+              "roles": {
+                "description": "full list of roles to grant the signer",
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/Roles"
+                }
+              },
+              "signer": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Removes the role that has been granted to the signer",
+        "type": "object",
+        "required": [
+          "revoke_role"
+        ],
+        "properties": {
+          "revoke_role": {
+            "type": "object",
+            "required": [
+              "roles",
+              "signer"
+            ],
+            "properties": {
+              "roles": {
+                "description": "fill list of roles to revoke from the signer",
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/Roles"
+                }
+              },
+              "signer": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Replaces the quota identified by QuotaMsg::Name",
+        "type": "object",
+        "required": [
+          "edit_path_quota"
+        ],
+        "properties": {
+          "edit_path_quota": {
+            "type": "object",
+            "required": [
+              "channel_id",
+              "denom",
+              "quota"
+            ],
+            "properties": {
+              "channel_id": {
+                "type": "string"
+              },
+              "denom": {
+                "type": "string"
+              },
+              "quota": {
+                "description": "similar to ResetPathQuota, but QuotaMsg::Name is used as the quota_id",
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/QuotaMsg"
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Used to remove a message from the message queue to prevent execution",
+        "type": "object",
+        "required": [
+          "remove_message"
+        ],
+        "properties": {
+          "remove_message": {
+            "type": "object",
+            "required": [
+              "message_id"
+            ],
+            "properties": {
+              "message_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Used to change the timelock delay for newly submitted messages",
+        "type": "object",
+        "required": [
+          "set_timelock_delay"
+        ],
+        "properties": {
+          "set_timelock_delay": {
+            "type": "object",
+            "required": [
+              "hours",
+              "signer"
+            ],
+            "properties": {
+              "hours": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "signer": {
+                "description": "the address to apply the timelock delay to",
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Permissionless message that anyone can invoke to trigger execution of queued messages that have passed the timelock delay\n\nIf both count and message_ids are some, message_ids is used. If both are None returns an error",
+        "type": "object",
+        "required": [
+          "process_messages"
+        ],
+        "properties": {
+          "process_messages": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "description": "number of queued messages to process, a value of 0 will attempt to process all queued messages",
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0.0
+              },
+              "message_ids": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ],
+    "definitions": {
+      "QuotaMsg": {
+        "type": "object",
+        "required": [
+          "duration",
+          "name",
+          "send_recv"
+        ],
+        "properties": {
+          "duration": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "name": {
+            "type": "string"
+          },
+          "send_recv": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0.0
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        },
+        "additionalProperties": false
+      },
+      "Roles": {
+        "description": "Roles defines the available permissions that can be assigned to addresses as part of the RBAC system",
+        "oneOf": [
+          {
+            "type": "string",
+            "enum": [
+              "ManageDenomRestrictions"
+            ]
+          },
+          {
+            "description": "Has the ability to add a new rate limit",
+            "type": "string",
+            "enum": [
+              "AddRateLimit"
+            ]
+          },
+          {
+            "description": "Has the ability to complete remove a configured rate limit",
+            "type": "string",
+            "enum": [
+              "RemoveRateLimit"
+            ]
+          },
+          {
+            "description": "Has the ability to reset tracked quotas",
+            "type": "string",
+            "enum": [
+              "ResetPathQuota"
+            ]
+          },
+          {
+            "description": "Has the ability to edit existing quotas",
+            "type": "string",
+            "enum": [
+              "EditPathQuota"
+            ]
+          },
+          {
+            "description": "Has the ability to grant roles to an address",
+            "type": "string",
+            "enum": [
+              "GrantRole"
+            ]
+          },
+          {
+            "description": "Has the ability to revoke granted roles to an address",
+            "type": "string",
+            "enum": [
+              "RevokeRole"
+            ]
+          },
+          {
+            "description": "Has the ability to remove queued messages",
+            "type": "string",
+            "enum": [
+              "RemoveMessage"
+            ]
+          },
+          {
+            "description": "Has the ability to alter timelock delay's",
+            "type": "string",
+            "enum": [
+              "SetTimelockDelay"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "query": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "QueryMsg",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "get_quotas"
+        ],
+        "properties": {
+          "get_quotas": {
+            "type": "object",
+            "required": [
+              "channel_id",
+              "denom"
+            ],
+            "properties": {
+              "channel_id": {
+                "type": "string"
+              },
+              "denom": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Returns a vector of all addresses that have been allocated one or more roles",
+        "type": "string",
+        "enum": [
+          "get_role_owners"
+        ]
+      },
+      {
+        "description": "Returns a vector of all roles that have been granted to `owner`",
+        "type": "object",
+        "required": [
+          "get_roles"
+        ],
+        "properties": {
+          "get_roles": {
+            "type": "object",
+            "required": [
+              "owner"
+            ],
+            "properties": {
+              "owner": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Returns a vector of queued message id's",
+        "type": "string",
+        "enum": [
+          "get_message_ids"
+        ]
+      },
+      {
+        "description": "Returns the queued message matching id",
+        "type": "object",
+        "required": [
+          "get_message"
+        ],
+        "properties": {
+          "get_message": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Returns the restrictions for a given denom",
+        "type": "object",
+        "required": [
+          "get_denom_restrictions"
+        ],
+        "properties": {
+          "get_denom_restrictions": {
+            "type": "object",
+            "required": [
+              "denom"
+            ],
+            "properties": {
+              "denom": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ]
+  },
+  "migrate": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "MigrateMsg",
+    "type": "object",
+    "additionalProperties": false
+  },
+  "sudo": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "SudoMsg",
+    "oneOf": [
+      {
+        "type": "object",
+        "required": [
+          "send_packet"
+        ],
+        "properties": {
+          "send_packet": {
+            "type": "object",
+            "required": [
+              "packet"
+            ],
+            "properties": {
+              "packet": {
+                "$ref": "#/definitions/Packet"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "recv_packet"
+        ],
+        "properties": {
+          "recv_packet": {
+            "type": "object",
+            "required": [
+              "packet"
+            ],
+            "properties": {
+              "packet": {
+                "$ref": "#/definitions/Packet"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "required": [
+          "undo_send"
+        ],
+        "properties": {
+          "undo_send": {
+            "type": "object",
+            "required": [
+              "packet"
+            ],
+            "properties": {
+              "packet": {
+                "$ref": "#/definitions/Packet"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    ],
+    "definitions": {
+      "Addr": {
+        "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
+        "type": "string"
+      },
+      "FungibleTokenData": {
+        "type": "object",
+        "required": [
+          "amount",
+          "denom",
+          "receiver",
+          "sender"
+        ],
+        "properties": {
+          "amount": {
+            "$ref": "#/definitions/Uint256"
+          },
+          "denom": {
+            "type": "string"
+          },
+          "receiver": {
+            "$ref": "#/definitions/Addr"
+          },
+          "sender": {
+            "$ref": "#/definitions/Addr"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Height": {
+        "type": "object",
+        "properties": {
+          "revision_height": {
+            "description": "The height of a block",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "revision_number": {
+            "description": "Previously known as \"epoch\"",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        },
+        "additionalProperties": false
+      },
+      "Packet": {
+        "type": "object",
+        "required": [
+          "data",
+          "destination_channel",
+          "destination_port",
+          "sequence",
+          "source_channel",
+          "source_port",
+          "timeout_height"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/definitions/FungibleTokenData"
+          },
+          "destination_channel": {
+            "type": "string"
+          },
+          "destination_port": {
+            "type": "string"
+          },
+          "sequence": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0.0
+          },
+          "source_channel": {
+            "type": "string"
+          },
+          "source_port": {
+            "type": "string"
+          },
+          "timeout_height": {
+            "$ref": "#/definitions/Height"
+          },
+          "timeout_timestamp": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0.0
+          }
+        },
+        "additionalProperties": false
+      },
+      "Uint256": {
+        "description": "An implementation of u256 that is using strings for JSON encoding/decoding, such that the full u256 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances out of primitive uint types or `new` to provide big endian bytes:\n\n``` # use cosmwasm_std::Uint256; let a = Uint256::from(258u128); let b = Uint256::new([ 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, ]); assert_eq!(a, b); ```",
+        "type": "string"
+      }
+    }
+  },
+  "responses": {
+    "get_denom_restrictions": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_String",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "get_message": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "QueuedMessage",
+      "type": "object",
+      "required": [
+        "message",
+        "message_id",
+        "submitted_at",
+        "timelock_delay"
+      ],
+      "properties": {
+        "message": {
+          "description": "the message that submitted to the contract after a sucessful governance proposal",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ExecuteMsg"
+            }
+          ]
+        },
+        "message_id": {
+          "description": "Constructed using format!(\"{}_{}\", Env::BlockInfo::Height Env::Transaction::Index)\n\nCan be used to remove a message from the queue without processing it",
+          "type": "string"
+        },
+        "submitted_at": {
+          "description": "the time which the message was processed by the contract",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            }
+          ]
+        },
+        "timelock_delay": {
+          "description": "the timelock delay that was in place when the message was queued for execution",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        }
+      },
+      "additionalProperties": false,
+      "definitions": {
+        "ExecuteMsg": {
+          "description": "The caller (IBC module) is responsible for correctly calculating the funds being sent through the channel",
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "add_path"
+              ],
+              "properties": {
+                "add_path": {
+                  "type": "object",
+                  "required": [
+                    "channel_id",
+                    "denom",
+                    "quotas"
+                  ],
+                  "properties": {
+                    "channel_id": {
+                      "type": "string"
+                    },
+                    "denom": {
+                      "type": "string"
+                    },
+                    "quotas": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/QuotaMsg"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "remove_path"
+              ],
+              "properties": {
+                "remove_path": {
+                  "type": "object",
+                  "required": [
+                    "channel_id",
+                    "denom"
+                  ],
+                  "properties": {
+                    "channel_id": {
+                      "type": "string"
+                    },
+                    "denom": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "reset_path_quota"
+              ],
+              "properties": {
+                "reset_path_quota": {
+                  "type": "object",
+                  "required": [
+                    "channel_id",
+                    "denom",
+                    "quota_id"
+                  ],
+                  "properties": {
+                    "channel_id": {
+                      "type": "string"
+                    },
+                    "denom": {
+                      "type": "string"
+                    },
+                    "quota_id": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "set_denom_restrictions"
+              ],
+              "properties": {
+                "set_denom_restrictions": {
+                  "type": "object",
+                  "required": [
+                    "allowed_channels",
+                    "denom"
+                  ],
+                  "properties": {
+                    "allowed_channels": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "denom": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "required": [
+                "unset_denom_restrictions"
+              ],
+              "properties": {
+                "unset_denom_restrictions": {
+                  "type": "object",
+                  "required": [
+                    "denom"
+                  ],
+                  "properties": {
+                    "denom": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "description": "Grants a role to the given signer",
+              "type": "object",
+              "required": [
+                "grant_role"
+              ],
+              "properties": {
+                "grant_role": {
+                  "type": "object",
+                  "required": [
+                    "roles",
+                    "signer"
+                  ],
+                  "properties": {
+                    "roles": {
+                      "description": "full list of roles to grant the signer",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/Roles"
+                      }
+                    },
+                    "signer": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "description": "Removes the role that has been granted to the signer",
+              "type": "object",
+              "required": [
+                "revoke_role"
+              ],
+              "properties": {
+                "revoke_role": {
+                  "type": "object",
+                  "required": [
+                    "roles",
+                    "signer"
+                  ],
+                  "properties": {
+                    "roles": {
+                      "description": "fill list of roles to revoke from the signer",
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/Roles"
+                      }
+                    },
+                    "signer": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "description": "Replaces the quota identified by QuotaMsg::Name",
+              "type": "object",
+              "required": [
+                "edit_path_quota"
+              ],
+              "properties": {
+                "edit_path_quota": {
+                  "type": "object",
+                  "required": [
+                    "channel_id",
+                    "denom",
+                    "quota"
+                  ],
+                  "properties": {
+                    "channel_id": {
+                      "type": "string"
+                    },
+                    "denom": {
+                      "type": "string"
+                    },
+                    "quota": {
+                      "description": "similar to ResetPathQuota, but QuotaMsg::Name is used as the quota_id",
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/QuotaMsg"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "description": "Used to remove a message from the message queue to prevent execution",
+              "type": "object",
+              "required": [
+                "remove_message"
+              ],
+              "properties": {
+                "remove_message": {
+                  "type": "object",
+                  "required": [
+                    "message_id"
+                  ],
+                  "properties": {
+                    "message_id": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "description": "Used to change the timelock delay for newly submitted messages",
+              "type": "object",
+              "required": [
+                "set_timelock_delay"
+              ],
+              "properties": {
+                "set_timelock_delay": {
+                  "type": "object",
+                  "required": [
+                    "hours",
+                    "signer"
+                  ],
+                  "properties": {
+                    "hours": {
+                      "type": "integer",
+                      "format": "uint64",
+                      "minimum": 0.0
+                    },
+                    "signer": {
+                      "description": "the address to apply the timelock delay to",
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "description": "Permissionless message that anyone can invoke to trigger execution of queued messages that have passed the timelock delay\n\nIf both count and message_ids are some, message_ids is used. If both are None returns an error",
+              "type": "object",
+              "required": [
+                "process_messages"
+              ],
+              "properties": {
+                "process_messages": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "description": "number of queued messages to process, a value of 0 will attempt to process all queued messages",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "format": "uint64",
+                      "minimum": 0.0
+                    },
+                    "message_ids": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          ]
+        },
+        "QuotaMsg": {
+          "type": "object",
+          "required": [
+            "duration",
+            "name",
+            "send_recv"
+          ],
+          "properties": {
+            "duration": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "name": {
+              "type": "string"
+            },
+            "send_recv": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0.0
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          },
+          "additionalProperties": false
+        },
+        "Roles": {
+          "description": "Roles defines the available permissions that can be assigned to addresses as part of the RBAC system",
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ManageDenomRestrictions"
+              ]
+            },
+            {
+              "description": "Has the ability to add a new rate limit",
+              "type": "string",
+              "enum": [
+                "AddRateLimit"
+              ]
+            },
+            {
+              "description": "Has the ability to complete remove a configured rate limit",
+              "type": "string",
+              "enum": [
+                "RemoveRateLimit"
+              ]
+            },
+            {
+              "description": "Has the ability to reset tracked quotas",
+              "type": "string",
+              "enum": [
+                "ResetPathQuota"
+              ]
+            },
+            {
+              "description": "Has the ability to edit existing quotas",
+              "type": "string",
+              "enum": [
+                "EditPathQuota"
+              ]
+            },
+            {
+              "description": "Has the ability to grant roles to an address",
+              "type": "string",
+              "enum": [
+                "GrantRole"
+              ]
+            },
+            {
+              "description": "Has the ability to revoke granted roles to an address",
+              "type": "string",
+              "enum": [
+                "RevokeRole"
+              ]
+            },
+            {
+              "description": "Has the ability to remove queued messages",
+              "type": "string",
+              "enum": [
+                "RemoveMessage"
+              ]
+            },
+            {
+              "description": "Has the ability to alter timelock delay's",
+              "type": "string",
+              "enum": [
+                "SetTimelockDelay"
+              ]
+            }
+          ]
+        },
+        "Timestamp": {
+          "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Uint64"
+            }
+          ]
+        },
+        "Uint64": {
+          "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding, such that the full u64 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n``` # use cosmwasm_std::Uint64; let a = Uint64::from(42u64); assert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32); assert_eq!(b.u64(), 70); ```",
+          "type": "string"
+        }
+      }
+    },
+    "get_message_ids": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_String",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "get_quotas": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_RateLimit",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/RateLimit"
+      },
+      "definitions": {
+        "Flow": {
+          "description": "A Flow represents the transfer of value for a denom through an IBC channel during a time window.\n\nIt tracks inflows (transfers into neturon) and outflows (transfers out of neturon).\n\nThe period_end represents the last point in time for which this Flow is tracking the value transfer.\n\nPeriods are discrete repeating windows. A period only starts when a contract call to update the Flow (SendPacket/RecvPackt) is made, and not right after the period ends. This means that if no calls happen after a period expires, the next period will begin at the time of the next call and be valid for the specified duration for the quota.\n\nThis is a design decision to avoid the period calculations and thus reduce gas consumption",
+          "type": "object",
+          "required": [
+            "inflow",
+            "outflow",
+            "period_end"
+          ],
+          "properties": {
+            "inflow": {
+              "$ref": "#/definitions/Uint256"
+            },
+            "outflow": {
+              "$ref": "#/definitions/Uint256"
+            },
+            "period_end": {
+              "$ref": "#/definitions/Timestamp"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Quota": {
+          "description": "A Quota is the percentage of the denom's total value that can be transferred through the channel in a given period of time (duration)\n\nPercentages can be different for send and recv\n\nThe name of the quota is expected to be a human-readable representation of the duration (i.e.: \"weekly\", \"daily\", \"every-six-months\", ...)",
+          "type": "object",
+          "required": [
+            "duration",
+            "max_percentage_recv",
+            "max_percentage_send",
+            "name"
+          ],
+          "properties": {
+            "channel_value": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Uint256"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "duration": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "max_percentage_recv": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "max_percentage_send": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "RateLimit": {
+          "description": "RateLimit is the main structure tracked for each channel/denom pair. Its quota represents rate limit configuration, and the flow its current state (i.e.: how much value has been transfered in the current period)",
+          "type": "object",
+          "required": [
+            "flow",
+            "quota"
+          ],
+          "properties": {
+            "flow": {
+              "$ref": "#/definitions/Flow"
+            },
+            "quota": {
+              "$ref": "#/definitions/Quota"
+            }
+          },
+          "additionalProperties": false
+        },
+        "Timestamp": {
+          "description": "A point in time in nanosecond precision.\n\nThis type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.\n\n## Examples\n\n``` # use cosmwasm_std::Timestamp; let ts = Timestamp::from_nanos(1_000_000_202); assert_eq!(ts.nanos(), 1_000_000_202); assert_eq!(ts.seconds(), 1); assert_eq!(ts.subsec_nanos(), 202);\n\nlet ts = ts.plus_seconds(2); assert_eq!(ts.nanos(), 3_000_000_202); assert_eq!(ts.seconds(), 3); assert_eq!(ts.subsec_nanos(), 202); ```",
+          "allOf": [
+            {
+              "$ref": "#/definitions/Uint64"
+            }
+          ]
+        },
+        "Uint256": {
+          "description": "An implementation of u256 that is using strings for JSON encoding/decoding, such that the full u256 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances out of primitive uint types or `new` to provide big endian bytes:\n\n``` # use cosmwasm_std::Uint256; let a = Uint256::from(258u128); let b = Uint256::new([ 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 1u8, 2u8, ]); assert_eq!(a, b); ```",
+          "type": "string"
+        },
+        "Uint64": {
+          "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding, such that the full u64 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n``` # use cosmwasm_std::Uint64; let a = Uint64::from(42u64); assert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32); assert_eq!(b.u64(), 70); ```",
+          "type": "string"
+        }
+      }
+    },
+    "get_role_owners": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_String",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "get_roles": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Array_of_Roles",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Roles"
+      },
+      "definitions": {
+        "Roles": {
+          "description": "Roles defines the available permissions that can be assigned to addresses as part of the RBAC system",
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "ManageDenomRestrictions"
+              ]
+            },
+            {
+              "description": "Has the ability to add a new rate limit",
+              "type": "string",
+              "enum": [
+                "AddRateLimit"
+              ]
+            },
+            {
+              "description": "Has the ability to complete remove a configured rate limit",
+              "type": "string",
+              "enum": [
+                "RemoveRateLimit"
+              ]
+            },
+            {
+              "description": "Has the ability to reset tracked quotas",
+              "type": "string",
+              "enum": [
+                "ResetPathQuota"
+              ]
+            },
+            {
+              "description": "Has the ability to edit existing quotas",
+              "type": "string",
+              "enum": [
+                "EditPathQuota"
+              ]
+            },
+            {
+              "description": "Has the ability to grant roles to an address",
+              "type": "string",
+              "enum": [
+                "GrantRole"
+              ]
+            },
+            {
+              "description": "Has the ability to revoke granted roles to an address",
+              "type": "string",
+              "enum": [
+                "RevokeRole"
+              ]
+            },
+            {
+              "description": "Has the ability to remove queued messages",
+              "type": "string",
+              "enum": [
+                "RemoveMessage"
+              ]
+            },
+            {
+              "description": "Has the ability to alter timelock delay's",
+              "type": "string",
+              "enum": [
+                "SetTimelockDelay"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

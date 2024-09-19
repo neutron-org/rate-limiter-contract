@@ -1,0 +1,77 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Array_of_Roles",
+  "type": "array",
+  "items": {
+    "$ref": "#/definitions/Roles"
+  },
+  "definitions": {
+    "Roles": {
+      "description": "Roles defines the available permissions that can be assigned to addresses as part of the RBAC system",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "ManageDenomRestrictions"
+          ]
+        },
+        {
+          "description": "Has the ability to add a new rate limit",
+          "type": "string",
+          "enum": [
+            "AddRateLimit"
+          ]
+        },
+        {
+          "description": "Has the ability to complete remove a configured rate limit",
+          "type": "string",
+          "enum": [
+            "RemoveRateLimit"
+          ]
+        },
+        {
+          "description": "Has the ability to reset tracked quotas",
+          "type": "string",
+          "enum": [
+            "ResetPathQuota"
+          ]
+        },
+        {
+          "description": "Has the ability to edit existing quotas",
+          "type": "string",
+          "enum": [
+            "EditPathQuota"
+          ]
+        },
+        {
+          "description": "Has the ability to grant roles to an address",
+          "type": "string",
+          "enum": [
+            "GrantRole"
+          ]
+        },
+        {
+          "description": "Has the ability to revoke granted roles to an address",
+          "type": "string",
+          "enum": [
+            "RevokeRole"
+          ]
+        },
+        {
+          "description": "Has the ability to remove queued messages",
+          "type": "string",
+          "enum": [
+            "RemoveMessage"
+          ]
+        },
+        {
+          "description": "Has the ability to alter timelock delay's",
+          "type": "string",
+          "enum": [
+            "SetTimelockDelay"
+          ]
+        }
+      ]
+    }
+  }
+}

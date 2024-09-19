@@ -1,1 +1,2 @@
-# rate-limiter-contract
+# Rate limiter contract
+
