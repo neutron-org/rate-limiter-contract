@@ -415,7 +415,8 @@ fn add_paths_later() {
     };
 
     let cosmos_msg = cw_rate_limit_contract.call(management_msg).unwrap();
-    app.execute(MockApi::default().addr_make(GOV_ADDR), cosmos_msg).unwrap();
+    app.execute(MockApi::default().addr_make(GOV_ADDR), cosmos_msg)
+        .unwrap();
 
     // Executing the same message again should fail, as it is now rate limited
     let cosmos_msg = cw_rate_limit_contract.sudo(msg);

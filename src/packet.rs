@@ -65,7 +65,7 @@ pub struct QuerySupplyOfResponse {
 }
 // End of SupplyOf query message definition
 
- // Needed to parse the coin's String as Uint256
+// Needed to parse the coin's String as Uint256
 
 fn hash_denom(denom: &str) -> String {
     let mut hasher = Sha256::new();
@@ -103,7 +103,11 @@ impl Packet {
     }
 
     pub fn channel_value(&self, deps: Deps, direction: &FlowType) -> Result<Uint256, StdError> {
-        Ok(Uint256::from_uint128(deps.querier.query_supply(self.local_denom(direction))?.amount))
+        Ok(Uint256::from_uint128(
+            deps.querier
+                .query_supply(self.local_denom(direction))?
+                .amount,
+        ))
     }
 
     pub fn get_funds(&self) -> Uint256 {
