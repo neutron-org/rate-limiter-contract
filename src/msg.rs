@@ -53,7 +53,6 @@ impl QuotaMsg {
 #[cw_serde]
 pub struct InstantiateMsg {
     pub gov_module: Addr,
-    pub ibc_module: Addr,
     pub paths: Vec<PathMsg>,
 }
 

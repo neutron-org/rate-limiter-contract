@@ -9,10 +9,7 @@ use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
 use crate::rbac::can_invoke_message;
 use crate::state::rbac::Roles;
 use crate::state::storage::RBAC_PERMISSIONS;
-use crate::state::{
-    flow::FlowType,
-    storage::{GOVMODULE, IBCMODULE},
-};
+use crate::state::{flow::FlowType, storage::GOVMODULE};
 use crate::{execute, message_queue, query, rbac, sudo};
 
 // version info for migration info
@@ -27,7 +24,6 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    IBCMODULE.save(deps.storage, &msg.ibc_module)?;
     GOVMODULE.save(deps.storage, &msg.gov_module)?;
     // grant the gov address full permissions
     RBAC_PERMISSIONS.save(
@@ -40,7 +36,6 @@ pub fn instantiate(
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
-        .add_attribute("ibc_module", msg.ibc_module.to_string())
         .add_attribute("gov_module", msg.gov_module.to_string()))
 }
 
@@ -117,18 +112,6 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
     let contract_version = get_contract_version(deps.storage)?;
-
-    // check contract version, and apply version specific migrations
-    if contract_version.version.eq("0.1.0") {
-        let gov_module = GOVMODULE.load(deps.storage)?;
-
-        // grant the gov address full permissions
-        RBAC_PERMISSIONS.save(
-            deps.storage,
-            gov_module.to_string(),
-            &Roles::all_roles().into_iter().collect(),
-        )?;
-    }
 
     // update contract version
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;

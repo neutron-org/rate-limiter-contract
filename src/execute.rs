@@ -147,27 +147,20 @@ mod tests {
     use cosmwasm_std::{from_json, StdError};
 
     use crate::contract::{execute, query};
-    use crate::helpers::tests::verify_query_response;
     use crate::msg::{ExecuteMsg, QueryMsg, QuotaMsg};
     use crate::state::rbac::Roles;
     use crate::state::{
         rate_limit::RateLimit,
-        storage::{ACCEPTED_CHANNELS_FOR_RESTRICTED_DENOM, GOVMODULE, IBCMODULE},
+        storage::{ACCEPTED_CHANNELS_FOR_RESTRICTED_DENOM, GOVMODULE},
     };
+    use crate::tests::helpers::tests::verify_query_response;
     use crate::ContractError;
 
-    const IBC_ADDR: &str = "neutron1cdlz8scnf3mmxdnf4njmtp7vz4gps7fswphrqn";
     const GOV_ADDR: &str = "neutron1w02khza7ux68ccwmz2hln97mkjspjxes8y2k9v";
 
     #[test] // Tests AddPath and RemovePath messages
     fn management_add_and_remove_path() {
         let mut deps = mock_dependencies();
-        IBCMODULE
-            .save(
-                deps.as_mut().storage,
-                &MockApi::default().addr_make(IBC_ADDR),
-            )
-            .unwrap();
         GOVMODULE
             .save(
                 deps.as_mut().storage,
@@ -178,7 +171,7 @@ mod tests {
         // grant role to IBC_ADDR
         crate::rbac::grant_role(
             &mut deps.as_mut(),
-            MockApi::default().addr_make(IBC_ADDR).to_string(),
+            MockApi::default().addr_make(GOV_ADDR).to_string(),
             vec![Roles::AddRateLimit, Roles::RemoveRateLimit],
         )
         .unwrap();
@@ -192,7 +185,7 @@ mod tests {
                 send_recv: (3, 5),
             }],
         };
-        let info = message_info(&MockApi::default().addr_make(IBC_ADDR), &[]);
+        let info = message_info(&MockApi::default().addr_make(GOV_ADDR), &[]);
 
         let env = mock_env();
         let res = execute(deps.as_mut(), env.clone(), info, msg).unwrap();
@@ -228,7 +221,7 @@ mod tests {
                 send_recv: (3, 5),
             }],
         };
-        let info = message_info(&MockApi::default().addr_make(IBC_ADDR), &[]);
+        let info = message_info(&MockApi::default().addr_make(GOV_ADDR), &[]);
 
         let env = mock_env();
         execute(deps.as_mut(), env.clone(), info, msg).unwrap();
@@ -239,7 +232,7 @@ mod tests {
             denom: "denom".to_string(),
         };
 
-        let info = message_info(&MockApi::default().addr_make(IBC_ADDR), &[]);
+        let info = message_info(&MockApi::default().addr_make(GOV_ADDR), &[]);
         let env = mock_env();
         execute(deps.as_mut(), env.clone(), info, msg).unwrap();
 
@@ -275,7 +268,7 @@ mod tests {
                 send_recv: (50, 30),
             }],
         };
-        let info = message_info(&MockApi::default().addr_make(IBC_ADDR), &[]);
+        let info = message_info(&MockApi::default().addr_make(GOV_ADDR), &[]);
 
         let env = mock_env();
         execute(deps.as_mut(), env.clone(), info, msg).unwrap();

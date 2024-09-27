@@ -4,13 +4,13 @@ use crate::packet::Packet;
 use crate::state::rbac::Roles;
 use crate::{contract::*, test_msg_recv, test_msg_send, ContractError};
 use cosmwasm_std::testing::{message_info, mock_dependencies, mock_env, MockApi};
-use cosmwasm_std::{from_json, Attribute, MessageInfo, Uint256};
+use cosmwasm_std::{from_json, Attribute, Uint256};
 
-use crate::helpers::tests::verify_query_response;
-use crate::msg::{InstantiateMsg, MigrateMsg, PathMsg, QueryMsg, QuotaMsg, SudoMsg};
+use crate::msg::{InstantiateMsg, PathMsg, QueryMsg, QuotaMsg, SudoMsg};
 use crate::state::flow::tests::RESET_TIME_WEEKLY;
 use crate::state::rate_limit::RateLimit;
-use crate::state::storage::{GOVMODULE, IBCMODULE, RATE_LIMIT_TRACKERS, RBAC_PERMISSIONS};
+use crate::state::storage::{GOVMODULE, RATE_LIMIT_TRACKERS, RBAC_PERMISSIONS};
+use crate::tests::helpers::tests::verify_query_response;
 const IBC_ADDR: &str = "neutron1cdlz8scnf3mmxdnf4njmtp7vz4gps7fswphrqn";
 const GOV_ADDR: &str = "neutron1w02khza7ux68ccwmz2hln97mkjspjxes8y2k9v";
 
@@ -20,7 +20,6 @@ fn proper_instantiation() {
 
     let msg = InstantiateMsg {
         gov_module: MockApi::default().addr_make(GOV_ADDR),
-        ibc_module: MockApi::default().addr_make(IBC_ADDR),
         paths: vec![],
     };
     let info = message_info(&MockApi::default().addr_make(IBC_ADDR), &[]);
@@ -30,10 +29,6 @@ fn proper_instantiation() {
     assert_eq!(0, res.messages.len());
 
     // The ibc and gov modules are properly stored
-    assert_eq!(
-        IBCMODULE.load(deps.as_ref().storage).unwrap().to_string(),
-        MockApi::default().addr_make(IBC_ADDR).to_string()
-    );
     assert_eq!(
         GOVMODULE.load(deps.as_ref().storage).unwrap().to_string(),
         MockApi::default().addr_make(GOV_ADDR).to_string()
@@ -57,7 +52,6 @@ fn consume_allowance() {
     let quota = QuotaMsg::new("weekly", RESET_TIME_WEEKLY, 10, 10);
     let msg = InstantiateMsg {
         gov_module: MockApi::default().addr_make(GOV_ADDR),
-        ibc_module: MockApi::default().addr_make(IBC_ADDR),
         paths: vec![PathMsg {
             channel_id: "any".to_string(),
             denom: "denom".to_string(),
@@ -96,7 +90,6 @@ fn symetric_flows_dont_consume_allowance() {
     let quota = QuotaMsg::new("weekly", RESET_TIME_WEEKLY, 10, 10);
     let msg = InstantiateMsg {
         gov_module: MockApi::default().addr_make(GOV_ADDR),
-        ibc_module: MockApi::default().addr_make(IBC_ADDR),
         paths: vec![PathMsg {
             channel_id: "any".to_string(),
             denom: "denom".to_string(),
@@ -158,7 +151,6 @@ fn asymetric_quotas() {
     let quota = QuotaMsg::new("weekly", RESET_TIME_WEEKLY, 4, 1);
     let msg = InstantiateMsg {
         gov_module: MockApi::default().addr_make(GOV_ADDR),
-        ibc_module: MockApi::default().addr_make(IBC_ADDR),
         paths: vec![PathMsg {
             channel_id: "any".to_string(),
             denom: "denom".to_string(),
@@ -241,7 +233,6 @@ fn query_state() {
     let quota = QuotaMsg::new("weekly", RESET_TIME_WEEKLY, 10, 10);
     let msg = InstantiateMsg {
         gov_module: MockApi::default().addr_make(GOV_ADDR),
-        ibc_module: MockApi::default().addr_make(IBC_ADDR),
         paths: vec![PathMsg {
             channel_id: "any".to_string(),
             denom: "denom".to_string(),
@@ -306,7 +297,6 @@ fn bad_quotas() {
 
     let msg = InstantiateMsg {
         gov_module: MockApi::default().addr_make(GOV_ADDR),
-        ibc_module: MockApi::default().addr_make(IBC_ADDR),
         paths: vec![PathMsg {
             channel_id: "any".to_string(),
             denom: "denom".to_string(),
@@ -347,7 +337,6 @@ fn undo_send() {
     let quota = QuotaMsg::new("weekly", RESET_TIME_WEEKLY, 10, 10);
     let msg = InstantiateMsg {
         gov_module: MockApi::default().addr_make(GOV_ADDR),
-        ibc_module: MockApi::default().addr_make(IBC_ADDR),
         paths: vec![PathMsg {
             channel_id: "any".to_string(),
             denom: "denom".to_string(),
@@ -413,61 +402,4 @@ fn test_tokenfactory_message() {
     let json = r#"{"send_packet":{"packet":{"sequence":4,"source_port":"transfer","source_channel":"channel-0","destination_port":"transfer","destination_channel":"channel-1491","data":{"denom":"transfer/channel-0/factory/osmo12smx2wdlyttvyzvzg54y2vnqwq2qjateuf7thj/czar","amount":"100000000000000000","sender":"osmo1cyyzpxplxdzkeea7kwsydadg87357qnahakaks","receiver":"osmo1c584m4lq25h83yp6ag8hh4htjr92d954vklzja"},"timeout_height":{},"timeout_timestamp":1668024476848430980}}}"#;
     let _parsed: SudoMsg = serde_json_wasm::from_str(json).unwrap();
     //println!("{parsed:?}");
-}
-
-#[test] // Tests we ccan instantiate the contract and that the owners are set correctly
-fn proper_migrate() {
-    let mut deps = mock_dependencies();
-    let env = mock_env();
-
-    crate::contract::instantiate(
-        deps.as_mut(),
-        env,
-        MessageInfo {
-            sender: MockApi::default().addr_make("osmo16tumts0kckpfp9fk7e3rnx9ahzn70dyyqfypgh"),
-            funds: vec![],
-        },
-        InstantiateMsg {
-            gov_module: MockApi::default().addr_make(GOV_ADDR),
-            ibc_module: MockApi::default().addr_make(IBC_ADDR),
-            paths: vec![],
-        },
-    )
-    .unwrap();
-
-    // test that instantiate set the correct gov module address and RBAC permissions
-    let permissions = RBAC_PERMISSIONS
-        .load(
-            &deps.storage,
-            MockApi::default().addr_make(GOV_ADDR).to_string(),
-        )
-        .unwrap();
-    for permission in Roles::all_roles() {
-        assert!(permissions.contains(&permission));
-    }
-    assert_eq!(
-        GOVMODULE.load(deps.as_ref().storage).unwrap().to_string(),
-        MockApi::default().addr_make(GOV_ADDR).to_string()
-    );
-
-    // revoke all roles from the gov contract, instantiation should re-asssign
-    crate::rbac::revoke_role(
-        &mut deps.as_mut(),
-        MockApi::default().addr_make(GOV_ADDR).to_string(),
-        Roles::all_roles(),
-    )
-    .unwrap();
-
-    migrate(deps.as_mut(), mock_env(), MigrateMsg {}).unwrap();
-
-    // ensure migration assigned all the roles
-    let permissions = RBAC_PERMISSIONS
-        .load(
-            &deps.storage,
-            MockApi::default().addr_make(GOV_ADDR).to_string(),
-        )
-        .unwrap();
-    for permission in Roles::all_roles() {
-        assert!(permissions.contains(&permission));
-    }
 }

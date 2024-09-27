@@ -1,4 +1,4 @@
-use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Storage};
+use cosmwasm_std::{DepsMut, Env, MessageInfo, Response, Storage, TransactionInfo};
 
 use crate::{
     error::ContractError,
@@ -72,7 +72,13 @@ pub fn queue_message(
     info: MessageInfo,
 ) -> Result<String, ContractError> {
     let timelock_delay = TIMELOCK_DELAY.load(deps.storage, info.sender.to_string())?;
-    let message_id = format!("{}_{}", env.block.height, env.transaction.unwrap().index);
+    let message_id = format!(
+        "{}_{}",
+        env.block.height,
+        env.transaction
+            .unwrap_or(TransactionInfo { index: 0 })
+            .index
+    );
     MESSAGE_QUEUE.push_back(
         deps.storage,
         &QueuedMessage {

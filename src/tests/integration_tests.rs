@@ -1,10 +1,11 @@
 #![cfg(test)]
 
 use crate::{
-    helpers::RateLimitingContract,
     msg::{ExecuteMsg, QueryMsg},
     state::{rate_limit::RateLimit, rbac::Roles},
-    test_msg_send, ContractError,
+    test_msg_send,
+    tests::helpers::RateLimitingContract,
+    ContractError,
 };
 use cosmwasm_std::{testing::MockApi, Addr, Coin, Empty, Timestamp, Uint128, Uint256};
 use cw_multi_test::{App, AppBuilder, Contract, ContractWrapper, Executor};
@@ -25,7 +26,6 @@ pub fn contract_template() -> Box<dyn Contract<Empty>> {
 }
 
 const USER: &str = "USER";
-const IBC_ADDR: &str = "neutron1cdlz8scnf3mmxdnf4njmtp7vz4gps7fswphrqn";
 const GOV_ADDR: &str = "neutron1w02khza7ux68ccwmz2hln97mkjspjxes8y2k9v";
 const NATIVE_DENOM: &str = "nosmo";
 
@@ -52,7 +52,6 @@ fn proper_instantiate(paths: Vec<PathMsg>) -> (App, RateLimitingContract) {
 
     let msg = InstantiateMsg {
         gov_module: MockApi::default().addr_make(GOV_ADDR),
-        ibc_module: Addr::unchecked(IBC_ADDR),
         paths,
     };
 

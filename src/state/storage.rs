@@ -13,9 +13,6 @@ use super::{
 /// Only this address can manage the contract. This will likely be the
 /// governance module, but could be set to something else if needed
 pub const GOVMODULE: Item<Addr> = Item::new("gov_module");
-/// Only this address can execute transfers. This will likely be the
-/// IBC transfer module, but could be set to something else if needed
-pub const IBCMODULE: Item<Addr> = Item::new("ibc_module");
 
 /// RATE_LIMIT_TRACKERS is the main state for this contract. It maps a path (IBC
 /// Channel + denom) to a vector of `RateLimit`s.
