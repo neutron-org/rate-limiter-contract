@@ -11,7 +11,7 @@ The motivation of IBC-rate-limit comes from the empirical observations of blockc
 - [Harmony Bridge Hack ($100 million)](https://rekt.news/harmony-rekt/) - (Would require rate limit + monitoring)
 - [Dragonberry IBC bug](https://forum.cosmos.network/t/ibc-security-advisory-dragonberry/7702) (can't yet disclose amount at risk, but was saved due to being found first by altruistic Osmosis core developers)
 
-In the presence of a software bug on Osmosis, IBC itself, or on a counterparty chain, we would like to prevent the bridge from being fully depegged.
+In the presence of a software bug on Neutron, IBC itself, or on a counterparty chain, we would like to prevent the bridge from being fully depegged.
 This stems from the idea that a 30% asset depeg is ~infinitely better than a 100% depeg.
 Its _crazy_ that today these complex bridged assets can instantly go to 0 in event of bug.
 The goal of a rate limit is to raise an alert that something has potentially gone wrong, allowing validators and developers to have time to analyze, react, and protect larger portions of user funds.
@@ -33,9 +33,9 @@ We do all of our rate limits based on the _net flow_ of assets on a channel pair
 We currently envision creating two kinds of rate limits:
 
 * Per denomination rate limits
-   - allows safety statements like "Only 30% of Stars on Osmosis can flow out in one day" or "The amount of Atom on Osmosis can at most double per day".
+   - allows safety statements like "Only 30% of Stars on Neutron can flow out in one day" or "The amount of Atom on Neutron can at most double per day".
 * Per channel rate limits
-   - Limit the total inflow and outflow on a given IBC channel, based on "USDC" equivalent, using Osmosis as the price oracle.
+   - Limit the total inflow and outflow on a given IBC channel, based on "USDC" equivalent, using Neutron as the price oracle.
 
 We currently only implement per denomination rate limits for non-native assets. We do not yet implement channel based rate limits.
 
@@ -82,11 +82,11 @@ It does get more complex when the counterparty chain is itself a DEX, but this i
 
 ### Outflow parameterization
 
-The "Outflow" side of a rate limit is protection against a bug on Osmosis OR IBC.
+The "Outflow" side of a rate limit is protection against a bug on Neutron OR IBC.
 This has potential for much more user-frustrating issues, if set too low.
 E.g. if there's some event that causes many people to suddenly withdraw many STARS or many USDC.
 
-So this parameterization has to contend with being a tradeoff of withdrawal liveness in high volatility periods vs being a crucial safety rail, in event of on-Osmosis bug.
+So this parameterization has to contend with being a tradeoff of withdrawal liveness in high volatility periods vs being a crucial safety rail, in event of on-Neutron bug.
 
 TODO: Better fill out
 
@@ -142,8 +142,8 @@ All of these messages receive the packet from the chain and extract the necessar
 
 To determine if a packet should be rate limited, we need:
 
-* Channel: The channel on the Osmosis side: `packet.SourceChannel` for sends, and `packet.DestinationChannel` for receives.
-* Denom: The denom of the token being transferred as known on the Osmosis side (more on that below)
+* Channel: The channel on the Neutron side: `packet.SourceChannel` for sends, and `packet.DestinationChannel` for receives.
+* Denom: The denom of the token being transferred as known on the Neutron side (more on that below)
 * Channel Value: The total value of the channel denominated in `Denom` (i.e.: channel-17 is worth 10k osmo).
 * Funds: the amount being transferred
 
@@ -152,7 +152,7 @@ The contract also supports quotas on a custom channel called "any" that is check
 transfer channel or the "any" channel have a quota that has been filled, the transaction will be rate limited.
 
 #### Notes on Denom
-We always use the the denom as represented on Osmosis. For native assets that is the local denom, and for non-native
+We always use the the denom as represented on Neutron. For native assets that is the local denom, and for non-native
 assets it's the "ibc" prefix and the sha256 hash of the denom trace (`ibc/...`).
 
 ##### Sends
@@ -167,7 +167,7 @@ is built on the `relay.SendTransfer()` in the transfer module and then passed to
 
 ##### Receives
 
-This behaves slightly different if the asset is an osmosis asset that was sent to the counterparty and is being
+This behaves slightly different if the asset is an Neutron asset that was sent to the counterparty and is being
 returned to the chain, or if the asset is being received by the chain and originates on the counterparty. In ibc this
 is called being a "source" or a "sink" respectively.
 
@@ -181,16 +181,16 @@ If the chain is the source for the denom, there are two possibilities:
 
 #### Notes on Channel Value
 We have iterated on different strategies for calculating the channel value. Our preferred strategy is the following:
-* For non-native tokens (`ibc/...`), the channel value should be the supply of those tokens in Osmosis
+* For non-native tokens (`ibc/...`), the channel value should be the supply of those tokens in Neutron
 * For native tokens, the channel value should be the total amount of tokens in escrow across all ibc channels
 
-The later ensures the limits are lower and represent the amount of native tokens that exist outside Osmosis. This is
+The later ensures the limits are lower and represent the amount of native tokens that exist outside Neutron. This is
 beneficial as we assume the majority of native tokens exist on the native chain and the amount "normal" ibc transfers is
 proportional to the tokens that have left the chain.
 
 This strategy cannot be implemented at the moment because IBC does not track the amount of tokens in escrow across
 all channels ([github issue](https://github.com/cosmos/ibc-go/issues/2664)). Instead, we use the current supply on
-Osmosis for all denoms (i.e.: treat native and non-native tokens the same way). Once that ticket is fixed, we will
+Neutron for all denoms (i.e.: treat native and non-native tokens the same way). Once that ticket is fixed, we will
 update this strategy.
 
 ##### Caching
@@ -209,7 +209,7 @@ The rate limit middleware wraps the `transferIBCModule` and is added as the entr
 The module is also provided to the underlying `transferIBCModule` as its `ICS4Wrapper`; previously, this would have
 pointed to a channel, which also implements the `ICS4Wrapper` interface.
 
-This integration can be seen in [osmosis/app/keepers/keepers.go](https://github.com/osmosis-labs/osmosis/blob/main/app/keepers/keepers.go)
+This integration can be seen in [neutron/app/app.go](https://github.com/neutron-org/neutron/blob/cfa54003cf1f8e9e7dd0d713c80605641d14f610/app/app.go#L1656)
 
 ## Testing strategy
 
