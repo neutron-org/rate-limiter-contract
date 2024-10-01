@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "get_quotas"
+      ],
+      "properties": {
+        "get_quotas": {
+          "type": "object",
+          "required": [
+            "channel_id",
+            "denom"
+          ],
+          "properties": {
+            "channel_id": {
+              "type": "string"
+            },
+            "denom": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Returns a vector of all addresses that have been allocated one or more roles",
+      "type": "string",
+      "enum": [
+        "get_role_owners"
+      ]
+    },
+    {
+      "description": "Returns a vector of all roles that have been granted to `owner`",
+      "type": "object",
+      "required": [
+        "get_roles"
+      ],
+      "properties": {
+        "get_roles": {
+          "type": "object",
+          "required": [
+            "owner"
+          ],
+          "properties": {
+            "owner": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Returns a vector of queued message id's",
+      "type": "string",
+      "enum": [
+        "get_message_ids"
+      ]
+    },
+    {
+      "description": "Returns the queued message matching id",
+      "type": "object",
+      "required": [
+        "get_message"
+      ],
+      "properties": {
+        "get_message": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    {
+      "description": "Returns the restrictions for a given denom",
+      "type": "object",
+      "required": [
+        "get_denom_restrictions"
+      ],
+      "properties": {
+        "get_denom_restrictions": {
+          "type": "object",
+          "required": [
+            "denom"
+          ],
+          "properties": {
+            "denom": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  ]
+}
