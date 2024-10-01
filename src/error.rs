@@ -33,5 +33,5 @@ pub enum ContractError {
     ChannelBlocked { channel: String, denom: String },
 
     #[error("A message is being executed not as a part of a transaction")]
-    NotTransation,
+    NotTransaction,
 }

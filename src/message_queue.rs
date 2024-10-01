@@ -71,13 +71,12 @@ pub fn queue_message(
     msg: ExecuteMsg,
     info: MessageInfo,
 ) -> Result<String, ContractError> {
-    if env.transaction.is_none() {
-        return Err(ContractError::NotTransation);
-    }
+    let message_id = match env.transaction {
+        None => return Err(ContractError::NotTransaction),
+        Some(v) => format!("{}_{}", env.block.height, v.index),
+    };
 
     let timelock_delay = TIMELOCK_DELAY.load(deps.storage, info.sender.to_string())?;
-
-    let message_id = format!("{}_{}", env.block.height, env.transaction.unwrap().index);
     MESSAGE_QUEUE.push_back(
         deps.storage,
         &QueuedMessage {
